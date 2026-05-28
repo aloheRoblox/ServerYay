@@ -1,11 +1,21 @@
 FROM openjdk:21-slim
-RUN apt-get update && apt-get install -y wget curl && rm -rf /var/lib/apt/lists/*
-WORKDIR /minecraft
-RUN curl -o /usr/local/bin/playit -L https://github.com/playit-cloud/playit-agent/releases/latest/download/playit-linux-amd64 && chmod +x /usr/local/bin/playit
-RUN wget https://api.papermc.io/v2/projects/paper/versions/1.21.1/builds/120/downloads/paper-1.21.1-120.jar -O server.jar
+
+# Устанавливаем нужные утилиты
+RUN apt-get update && apt-get install -y curl wget screen && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /server
+
+# Скачиваем стабильное ядро Paper 1.21.1
+RUN wget -O server.jar https://downloads.papermc.io/v2/projects/paper/versions/1.21.1/builds/120/downloads/paper-1.21.1-120.jar
+
+# Принимаем лицензию EULA
 RUN echo "eula=true" > eula.txt
-RUN echo "online-mode=false" > server.properties
-RUN echo "server-port=25565" >> server.properties
-RUN echo '#!/bin/bash\nplayit & \njava -Xmx5G -Xms5G -jar server.jar nogui\n' > start.sh
-RUN chmod +x start.sh
-CMD ["./start.sh"]
+
+# Копируем скрипт запуска
+COPY start.sh /server/start.sh
+RUN chmod +x /server/start.sh
+
+# Открываем порты для Майнкрафта
+EXPOSE 25565
+
+CMD ["/server/start.sh"]
